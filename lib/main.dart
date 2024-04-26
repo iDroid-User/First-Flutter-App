@@ -33,8 +33,10 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // New property, initialized w/ an empty list (only contains word pairs)
+  // New property, initialized w/ an empty list
+  // Only contains word pairs: <WordPair>[] (using generics)
   // Dart refuses to run if you try adding anything other than WordPair
+  // A set ({ }) would make more sense for a collection of favs
   var favorites = <WordPair>[];
 
   // Either removes or adds the current word pair from favorites
@@ -44,7 +46,7 @@ class MyAppState extends ChangeNotifier {
     } else {
       favorites.add(current);
     }
-    notifyListeners();
+    notifyListeners(); // Called when a change is made to the list
   }
 }
 
@@ -191,11 +193,17 @@ class GeneratorPage extends StatelessWidget {
                 label: Text('Like'),
               ),
               SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: () {
-                  appState.getNext();
-                },
-                child: Text('Next'),
+              Row(
+                mainAxisSize:
+                    MainAxisSize.min, // Fixes children lumped to the left
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      appState.getNext();
+                    },
+                    child: Text('Next'),
+                  ),
+                ],
               ),
             ],
           ),
