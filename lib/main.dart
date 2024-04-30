@@ -1,5 +1,6 @@
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -121,45 +122,100 @@ class MyAppState extends ChangeNotifier {
 // New MyHomePage
 // The entire contents of MyHomePage is extracted into a new widget,
 // GeneratorPage - except Scaffold
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+// The IDE created the class _MyHomePageState. This class extends State, & can
+// therefore manage its own values.
+// The build() method from the old, stateless widget moved to this new class.
+// It was moved verbatim - it just lives somewhere else.
+// The underscore makes _MyHomePageState privated, enforced by the compiler
+class _MyHomePageState extends State<MyHomePage> {
+  // Used in the NavigationRail definition instead of the hard-coded 0
+  // Can be used to determine what screen to display
+  var selectedIndex = 0; // Only variable to track
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Contains two children
-      body: Row(
-        children: [
-          // First widget
-          // Ensures that its child isn't obscured by a hardware notch or
-          // a status bar
-          SafeArea(
-            child: NavigationRail(
-              extended: false,
-              destinations: [
-                NavigationRailDestination(
-                  icon: Icon(Icons.home),
-                  label: Text('Home'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.favorite),
-                  label: Text('Favorites'),
-                ),
-              ],
-              selectedIndex: 0,
-              onDestinationSelected: (value) {
-                print('selected: $value');
-              },
+    Widget page;
+    // Assigns a screen to page, according to the current value in selectedIndex
+    switch (selectedIndex) {
+      case 0:
+        page = GeneratorPage();
+        break;
+      case 1:
+        // Used while there's no FavoritesPage - a widget that draws a crossed
+        // rectangle to designate an unfinished part of the UI
+        page = Placeholder();
+        break;
+      default:
+        // Applying the fail-fast principle, this error is thrown to help to
+        // prevent bugs down the line. If a new destination is added to the
+        // navigation rail w/o updating this code, the program crashes in
+        // development (instead of remaining ambiguous or letting you publish
+        // buggy code into production)
+        throw UnimplementedError('no widget for $selectedIndex');
+    }
+    // builder callback is called every time the constraints change (e.g., the user
+    // resizes the app's window; the user rotates their phone from portrait mode to
+    // landscape mode, vice versa; some widget next to MyHomePage grows in size,
+    // making MyHomePage's constraints smaller).
+    // Now the code can decide whether to show the label by querying the current constraints.
+    return LayoutBuilder(builder: (context, constraints) {
+      return Scaffold(
+        // Contains two children
+        body: Row(
+          children: [
+            // First widget
+            // Ensures that its child isn't obscured by a hardware notch or
+            // a status bar
+            SafeArea(
+              child: NavigationRail(
+                // Now the app responds to its environment (e.g., screen size, orientation, platform)
+                extended: constraints.maxWidth >=
+                    600, // Changing it to true shows the labels next to the icons
+                destinations: [
+                  NavigationRailDestination(
+                    icon: Icon(Icons.home),
+                    label: Text('Home'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.favorite),
+                    label: Text('Favorites'),
+                  ),
+                ],
+                selectedIndex:
+                    selectedIndex, // 0 selects the first destination, 1 selects the second, etc.
+                // Defines what happens when one of the destinations is selected
+                // When called, instead of printing the new value to console, it assigns it to
+                // selectedIndex inside a setState() call - this is similar to the
+                // notifyListeners() method used previously (it makes sure the UI updates).
+                onDestinationSelected: (value) {
+                  setState(() {
+                    selectedIndex = value; // Outputs the requested index value
+                  });
+                },
+              ),
             ),
-          ),
-          // Second widget
-          Expanded(
-            child: Container(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              child: GeneratorPage(),
+            // Second widget; second child of Row
+            // Expanded widgets are extremely useful in rows & columns:
+            // they let you express layouts where some children take as much space
+            // as they need (SafeArea) & other widgets take as much of the remaining
+            // room as possible (Expanded; greedy).
+            // Two Expanded widgets would split the horizontal space between themselves
+            Expanded(
+              child: Container(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                // The app now switches between GeneratorPage & the placeholder that'll
+                // soon become the Favorites page.
+                child: page,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }
 
